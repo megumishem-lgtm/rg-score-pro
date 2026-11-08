@@ -1,0 +1,172 @@
+from pathlib import Path
+from zipfile import ZipFile, ZIP_DEFLATED
+
+html = r'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#28183e">
+<title>RG Score Pro</title>
+<style>
+:root{--bg:#f7f4fb;--card:#fff;--ink:#261d32;--muted:#716a7d;--line:#e8e1ef;--accent:#7046a8;--soft:#f0e8fa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:linear-gradient(135deg,#24143f,#7046a8);color:white;padding:26px 18px}
+.wrap{max-width:900px;margin:auto;padding:0 16px}h1{font-size:clamp(26px,5vw,36px);margin:0}header p{margin:5px 0 0;color:#e9def6}
+main{padding:20px 0 40px;display:grid;gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:0 4px 18px #2b174008}
+h2{font-size:18px;margin:0 0 13px}.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:5px}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);font:inherit}
+.scorebox{background:var(--soft);border-color:#dfd0f0}.final{font-size:42px;font-weight:800;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.stat{background:#ffffffa8;border-radius:10px;padding:10px}.stat small{display:block;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+button{font:inherit;font-weight:650;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:white;color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b99bdc;outline-offset:2px}
+button.active,.primary{background:var(--accent);border-color:var(--accent);color:white}button:disabled{opacity:.45;cursor:not-allowed}
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.value{background:#faf7fd;font-size:17px;padding:15px 8px}
+.value:hover{border-color:var(--accent);background:var(--soft)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}
+.history{display:grid;gap:7px}.entry,.saved-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:9px;background:#faf8fc}
+.entry button{padding:5px 9px;font-size:13px}.breakdown{display:grid;gap:9px}.breakrow{display:flex;justify-content:space-between;gap:12px}
+.note{font-size:12px;color:var(--muted)}footer{text-align:center;padding:15px;color:var(--muted);font-size:12px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.tabs{grid-template-columns:repeat(2,1fr)}.final{font-size:36px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>RG SCORE PRO</h1><p>Rhythmic Gymnastics · Routine Scoring Assistant</p></div></header>
+<main class="wrap">
+<section class="card"><h2>Athlete information</h2><div class="grid">
+<div><label for="athlete">Gymnast name</label><input id="athlete" placeholder="Enter gymnast name"></div>
+<div><label for="competition">Competition</label><input id="competition" placeholder="Competition name"></div>
+<div><label for="apparatus">Apparatus</label><select id="apparatus"><option>Hoop</option><option>Ball</option><option>Clubs</option><option>Ribbon</option></select></div>
+<div><label for="routineDate">Date</label><input id="routineDate" type="date"></div>
+</div></section>
+
+<section class="card scorebox"><div class="muted">LIVE FINAL SCORE</div><div class="final" id="finalScore">20.00</div>
+<div class="stats">
+<div class="stat"><small>DB</small><b id="dbTotal">0.00</b></div><div class="stat"><small>DA</small><b id="daTotal">0.00</b></div><div class="stat"><small>R</small><b id="rDisplay">0.00</b></div>
+<div class="stat"><small>Execution (E)</small><b id="eTotal">10.00</b></div><div class="stat"><small>Artistry (A)</small><b id="aTotal">10.00</b></div><div class="stat"><small>Penalties</small><b id="pTotal">0.00</b></div>
+</div></section>
+
+<section class="card"><h2>Add difficulty elements</h2><p class="muted">Choose DB or DA, then tap the value for each recognized element.</p>
+<div class="tabs"><button class="active" data-mode="DB">DB · Body</button><button data-mode="DA">DA · Apparatus</button></div>
+<div class="muted" id="difficultyLabel">Adding DB elements</div>
+<div class="values" id="difficultyValues">
+<button class="value" data-value="0.10">+0.10</button><button class="value" data-value="0.20">+0.20</button><button class="value" data-value="0.30">+0.30</button>
+<button class="value" data-value="0.40">+0.40</button><button class="value" data-value="0.50">+0.50</button><button class="value" data-value="0.60">+0.60</button>
+</div>
+<div class="grid" style="margin-top:12px"><div><label for="customDifficulty">Custom value</label><input id="customDifficulty" type="number" min="0" step="0.01" placeholder="e.g. 0.70"></div>
+<div style="display:flex;align-items:end"><button class="primary" id="addCustom" style="width:100%">Add custom value</button></div></div>
+</section>
+
+<section class="card"><h2>Execution & artistry deductions</h2>
+<div class="tabs"><button class="active" data-deduction="Execution">Execution (E)</button><button data-deduction="Artistry">Artistry (A)</button><button data-deduction="Penalty">Penalty</button></div>
+<div class="muted" id="deductionLabel">Tap a value to record an Execution deduction</div>
+<div class="values" id="deductionValues">
+<button class="value" data-value="0.10">−0.10</button><button class="value" data-value="0.20">−0.20</button><button class="value" data-value="0.30">−0.30</button>
+<button class="value" data-value="0.40">−0.40</button><button class="value" data-value="0.50">−0.50</button>
+</div></section>
+
+<section class="card"><h2>Other score inputs</h2><div class="grid">
+<div><label for="rValue">R score (enter evaluated total)</label><input id="rValue" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="dAdjustment">Other D adjustment (+/−)</label><input id="dAdjustment" type="number" step="0.01" value="0"></div>
+<div><label for="eStart">Starting E score</label><input id="eStart" type="number" min="0" step="0.01" value="10"></div>
+<div><label for="aStart">Starting A score</label><input id="aStart" type="number" min="0" step="0.01" value="10"></div>
+<div><label for="otherPenalty">Additional penalties</label><input id="otherPenalty" type="number" min="0" step="0.01" value="0"></div>
+</div></section>
+
+<section class="card"><h2>Entry history <span class="muted" id="entryCount">0 entries</span></h2><div class="history" id="history"><p class="muted">No entries yet.</p></div>
+<div class="actions" style="margin-top:12px"><button id="undo">Undo last entry</button><button id="clearEntries">Clear entries</button></div></section>
+
+<section class="card"><h2>Score breakdown</h2><div class="breakdown">
+<div class="breakrow"><span>D = DB + DA + R + adjustment</span><b id="dBreakdown">0.00</b></div>
+<div class="breakrow"><span>E = starting E − E deductions</span><b id="eBreakdown">10.00</b></div>
+<div class="breakrow"><span>A = starting A − A deductions</span><b id="aBreakdown">10.00</b></div>
+<div class="breakrow"><span>Total penalties</span><b id="pBreakdown">0.00</b></div>
+<hr style="border:0;border-top:1px solid var(--line);width:100%">
+<div class="breakrow"><b>FINAL SCORE</b><b id="finalBreakdown">20.00</b></div>
+</div></section>
+
+<section class="card"><h2>Save this routine</h2><div class="actions"><button class="primary" id="saveRoutine">Save routine</button><button id="newRoutine">New routine</button></div><p class="muted">Saved routines stay in this browser on this device.</p></section>
+<section class="card"><h2>Saved routines <span class="muted" id="savedCount">0 records</span></h2><div id="savedRoutines" class="history"><p class="muted">No saved routines.</p></div>
+<div class="actions" style="margin-top:12px"><button id="exportCsv">Export CSV</button><button id="clearSaved">Delete saved records</button></div></section>
+<p class="note">Scoring assistant only. Verify element values, recognition, repetitions, deductions, and scoring rules against the applicable FIG Code of Points and competition regulations. This website does not automatically recognize gymnastics elements or replace qualified judges.</p>
+</main><footer>RG Score Pro · Independent scoring tool</footer>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),num=id=>{const v=Number($(id).value);return Number.isFinite(v)?v:0},fmt=n=>n.toFixed(2);
+let mode="DB",deductionMode="Execution",entries=[],saved=[];
+try{saved=JSON.parse(localStorage.getItem("rgScoreSaved")||"[]");if(!Array.isArray(saved))saved=[]}catch{saved=[]}
+function totals(){
+const s={DB:0,DA:0,Execution:0,Artistry:0,Penalty:0};entries.forEach(x=>s[x.type]+=x.value);
+const d=s.DB+s.DA+num("rValue")+num("dAdjustment"),e=num("eStart")-s.Execution,a=num("aStart")-s.Artistry,p=s.Penalty+num("otherPenalty"),total=d+e+a-p;
+$("dbTotal").textContent=fmt(s.DB);$("daTotal").textContent=fmt(s.DA);$("rDisplay").textContent=fmt(num("rValue"));
+$("eTotal").textContent=fmt(e);$("aTotal").textContent=fmt(a);$("pTotal").textContent=fmt(p);
+$("dBreakdown").textContent=fmt(d);$("eBreakdown").textContent=fmt(e);$("aBreakdown").textContent=fmt(a);$("pBreakdown").textContent=fmt(p);
+$("finalScore").textContent=fmt(total);$("finalBreakdown").textContent=fmt(total);$("entryCount").textContent=entries.length+" entries";$("undo").disabled=!entries.length;
+return{db:s.DB,da:s.DA,d,e,a,p,total}
+}
+function add(type,value){if(!Number.isFinite(value)||value<=0)return;entries.push({type,value});renderHistory()}
+function renderHistory(){
+const box=$("history");box.replaceChildren();
+if(!entries.length){const p=document.createElement("p");p.className="muted";p.textContent="No entries yet.";box.append(p)}
+entries.forEach((entry,index)=>{const row=document.createElement("div");row.className="entry";const label=document.createElement("span");label.textContent=(["DB","DA"].includes(entry.type)?"+":"−")+fmt(entry.value)+" · "+entry.type;const remove=document.createElement("button");remove.textContent="Remove";remove.addEventListener("click",()=>{entries.splice(index,1);renderHistory()});row.append(label,remove);box.append(row)});
+totals()
+}
+document.querySelectorAll("[data-mode]").forEach(btn=>btn.addEventListener("click",()=>{mode=btn.dataset.mode;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b===btn));$("difficultyLabel").textContent="Adding "+mode+" elements"}));
+document.querySelectorAll("#difficultyValues [data-value]").forEach(btn=>btn.addEventListener("click",()=>add(mode,Number(btn.dataset.value))));
+$("addCustom").addEventListener("click",()=>{const v=num("customDifficulty");if(v>0){add(mode,v);$("customDifficulty").value=""}});
+document.querySelectorAll("[data-deduction]").forEach(btn=>btn.addEventListener("click",()=>{deductionMode=btn.dataset.deduction;document.querySelectorAll("[data-deduction]").forEach(b=>b.classList.toggle("active",b===btn));$("deductionLabel").textContent="Tap a value to record a "+deductionMode+" "+(deductionMode==="Penalty"?"":"deduction")}));
+document.querySelectorAll("#deductionValues [data-value]").forEach(btn=>btn.addEventListener("click",()=>add(deductionMode,Number(btn.dataset.value))));
+["rValue","dAdjustment","eStart","aStart","otherPenalty"].forEach(id=>$(id).addEventListener("input",totals));
+$("undo").addEventListener("click",()=>{entries.pop();renderHistory()});$("clearEntries").addEventListener("click",()=>{entries=[];renderHistory()});
+function renderSaved(){
+$("savedCount").textContent=saved.length+" records";const box=$("savedRoutines");box.replaceChildren();
+if(!saved.length){const p=document.createElement("p");p.className="muted";p.textContent="No saved routines.";box.append(p);return}
+saved.forEach(r=>{const row=document.createElement("div");row.className="saved-item";const left=document.createElement("span");left.textContent=r.name+" · "+r.apparatus+(r.competition?" · "+r.competition:"");const right=document.createElement("b");right.textContent=fmt(r.total);row.append(left,right);box.append(row)})
+}
+$("saveRoutine").addEventListener("click",()=>{const s=totals();saved.push({name:$("athlete").value.trim()||"Unnamed gymnast",apparatus:$("apparatus").value,competition:$("competition").value.trim(),date:$("routineDate").value,...s});try{localStorage.setItem("rgScoreSaved",JSON.stringify(saved))}catch{}renderSaved()});
+$("newRoutine").addEventListener("click",()=>{if(!confirm("Start a new routine? Unsaved entries will be cleared."))return;entries=[];["athlete","competition","routineDate"].forEach(id=>$(id).value="");$("apparatus").value="Hoop";["rValue","dAdjustment","otherPenalty"].forEach(id=>$(id).value="0");["eStart","aStart"].forEach(id=>$(id).value="10");$("customDifficulty").value="";mode="DB";deductionMode="Execution";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode==="DB"));document.querySelectorAll("[data-deduction]").forEach(b=>b.classList.toggle("active",b.dataset.deduction==="Execution"));$("difficultyLabel").textContent="Adding DB elements";$("deductionLabel").textContent="Tap a value to record an Execution deduction";renderHistory()});
+$("exportCsv").addEventListener("click",()=>{if(!saved.length){alert("There are no saved routines to export yet.");return}const rows=[["Gymnast","Apparatus","Competition","Date","DB","DA","D","E","A","Penalties","Final"],...saved.map(r=>[r.name,r.apparatus,r.competition,r.date,r.db,r.da,r.d,r.e,r.a,r.p,r.total])];const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));const a=document.createElement("a");a.href=url;a.download="RG-Score-Pro-results.csv";a.click();URL.revokeObjectURL(url)});
+$("clearSaved").addEventListener("click",()=>{if(!confirm("Delete all saved routines from this browser?"))return;saved=[];try{localStorage.removeItem("rgScoreSaved")}catch{}renderSaved()});
+renderHistory();renderSaved()
+})();
+</script>
+</body></html>'''
+
+readme = """# RG Score Pro
+
+A static rhythmic gymnastics scoring assistant.
+
+## Run locally
+Open `index.html` in a modern browser.
+
+## Publish with GitHub Pages
+1. Create a GitHub repository named `rg-score-pro`.
+2. Upload `index.html` to the repository root.
+3. Open **Settings → Pages**.
+4. Under **Build and deployment**, choose **Deploy from a branch**.
+5. Select the `main` branch and `/ (root)`, then Save.
+6. Wait for GitHub Pages to publish the site. The URL will look like:
+   `https://YOUR-USERNAME.github.io/rg-score-pro/`
+
+## Notes
+- Routine saves use browser localStorage and stay on that browser/device.
+- CSV export downloads saved routines.
+- DB/DA values are manual inputs; this tool does not recognize or validate elements.
+- Confirm scoring rules and values against the current applicable FIG Code of Points and competition regulations.
+"""
+
+base = Path("/mnt/data/rg_score_pro_website")
+base.mkdir(parents=True, exist_ok=True)
+(base / "index.html").write_text(html, encoding="utf-8")
+(base / "README.md").write_text(readme, encoding="utf-8")
+zip_path = Path("/mnt/data/rg_score_pro_website.zip")
+with ZipFile(zip_path, "w", ZIP_DEFLATED) as z:
+    z.write(base / "index.html", "rg-score-pro/index.html")
+    z.write(base / "README.md", "rg-score-pro/README.md")
+
+print("Website created successfully.")
+print(f"HTML: {base / 'index.html'}")
+print(f"ZIP: {zip_path}")
