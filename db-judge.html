@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RG Score Pro | DB Judge</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f5f0fa;
+    color: #342344;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+}
+
+header {
+    background: #573779;
+    color: white;
+    padding: 24px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-top: 18px;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #00000012;
+}
+
+h2 {
+    color: #573779;
+    margin-top: 0;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid #d8cce4;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+button {
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+.add-btn {
+    background: #68458c;
+    color: white;
+    width: 100%;
+}
+
+.delete-btn {
+    background: #f5dfe4;
+    color: #922c46;
+    margin: 0;
+}
+
+.score {
+    background: #eee5f7;
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.score h1 {
+    font-size: 42px;
+    margin: 8px 0;
+    color: #573779;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.small {
+    color: #777;
+    font-size: 13px;
+}
+
+@media(max-width: 500px) {
+    body {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 14px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1>RG SCORE PRO</h1>
+    <h2 style="color:white;">DB JUDGE PANEL</h2>
+    <p>Body Difficulties Judge</p>
+</header>
+
+<div class="card">
+    <h2>Competition Information</h2>
+
+    <label>Competition Name</label>
+    <input id="competition" placeholder="Enter competition name">
+
+    <label>Athlete Name</label>
+    <input id="athlete" placeholder="Enter gymnast's name">
+
+    <label>Club / Team</label>
+    <input id="club" placeholder="Enter club or team">
+
+    <label>Apparatus</label>
+    <select id="apparatus">
+        <option value="Hoop">Hoop</option>
+        <option value="Ball">Ball</option>
+        <option value="Clubs">Clubs</option>
+        <option value="Ribbon">Ribbon</option>
+    </select>
+
+    <label>Judge Name</label>
+    <input id="judge" placeholder="Enter DB judge name">
+</div>
+
+<div class="card">
+    <h2>Add Body Difficulty (DB)</h2>
+
+    <label>Element Name</label>
+    <input id="element" placeholder="Example: Penché Balance">
+
+    <label>Difficulty Value</label>
+    <input id="value" type="number" min="0" step="0.001"
+           placeholder="Enter verified value">
+
+    <button class="add-btn" onclick="addElement()">
+        + Add DB Element
+    </button>
+
+    <p class="small">
+        Enter values according to the applicable competition rules.
+        This tool does not automatically verify FIG difficulty values.
+    </p>
+</div>
+
+<div class="card">
+    <h2>Recorded DB Elements</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Element</th>
+                <th>Value</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="elementList">
+            <tr>
+                <td colspan="3">No elements recorded yet.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>DB Score Summary</h2>
+
+    <div class="score">
+        <p>Total Body Difficulty</p>
+        <h1 id="total">0.000</h1>
+        <p id="count">0 elements recorded</p>
+    </div>
+
+    <button class="add-btn" onclick="exportCSV()">
+        Export DB Score (CSV)
+    </button>
+
+    <button class="add-btn" onclick="window.print()">
+        Print Score Sheet
+    </button>
+</div>
+
+</div>
+
+<script>
+let elements = [];
+
+function addElement() {
+    const name = document.getElementById("element").value.trim();
+    const value = Number(document.getElementById("value").value);
+
+    if (!name || document.getElementById("value").value === "" ||
+        !Number.isFinite(value) || value < 0) {
+        alert("Please enter a valid element name and difficulty value.");
+        return;
+    }
+
+    elements.push({
+        name: name,
+        value: value
+    });
+
+    document.getElementById("element").value = "";
+    document.getElementById("value").value = "";
+
+    updateScore();
+}
+
+function deleteElement(index) {
+    elements.splice(index, 1);
+    updateScore();
+}
+
+function updateScore() {
+    const list = document.getElementById("elementList");
+
+    if (elements.length === 0) {
+        list.innerHTML =
+            '<tr><td colspan="3">No elements recorded yet.</td></tr>';
+    } else {
+        list.innerHTML = elements.map((item, index) => `
+            <tr>
+                <td>${escapeHTML(item.name)}</td>
+                <td>${item.value.toFixed(3)}</td>
+                <td>
+                    <button class="delete-btn"
+                    onclick="deleteElement(${index})">
+                    Delete
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    const total = elements.reduce(
+        (sum, item) => sum + item.value, 0
+    );
+
+    document.getElementById("total").textContent = total.toFixed(3);
+    document.getElementById("count").textContent =
+        elements.length + " elements recorded";
+}
+
+function escapeHTML(text) {
+    return text.replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function exportCSV() {
+    const rows = [
+        ["Competition", document.getElementById("competition").value],
+        ["Athlete", document.getElementById("athlete").value],
+        ["Club", document.getElementById("club").value],
+        ["Apparatus", document.getElementById("apparatus").value],
+        ["Judge", document.getElementById("judge").value],
+        [],
+        ["Element", "Difficulty Value"],
+        ...elements.map(item => [item.name, item.value.toFixed(3)]),
+        [],
+        ["Total DB", document.getElementById("total").textContent]
+    ];
+
+    const csv = rows.map(row =>
+        row.map(value =>
+            '"' + String(value ?? "").replace(/"/g, '""') + '"'
+        ).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "RG-Score-Pro-DB-Score.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
