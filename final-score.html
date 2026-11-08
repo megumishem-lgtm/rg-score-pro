@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RG Score Pro | Final Score</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 22px;
+    font-family: Arial, sans-serif;
+    background: #f5f0fa;
+    color: #342344;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+}
+
+header {
+    background: linear-gradient(135deg, #43245f, #7950a0);
+    color: white;
+    padding: 30px 20px;
+    text-align: center;
+    border-radius: 18px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+}
+
+.card {
+    background: white;
+    padding: 22px;
+    margin-top: 18px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px #00000010;
+}
+
+h2 {
+    color: #573779;
+    margin-top: 0;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 13px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid #d8cce4;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.score-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.score-box {
+    background: #f5f0fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.score-box input {
+    background: white;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #68458c;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #493064;
+}
+
+.secondary {
+    background: #e9dff2;
+    color: #573779;
+}
+
+.result {
+    background: #eee5f7;
+    padding: 25px;
+    border-radius: 14px;
+    text-align: center;
+}
+
+.result h1 {
+    color: #573779;
+    font-size: 48px;
+    margin: 10px 0;
+}
+
+.breakdown {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.note {
+    font-size: 13px;
+    color: #777;
+    line-height: 1.5;
+}
+
+footer {
+    text-align: center;
+    color: #888;
+    margin-top: 25px;
+    font-size: 13px;
+}
+
+@media(max-width: 550px) {
+    body {
+        padding: 10px;
+    }
+
+    .score-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .result h1 {
+        font-size: 38px;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+    }
+
+    button {
+        display: none;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1>RG SCORE PRO</h1>
+    <p>FINAL SCORE DASHBOARD</p>
+    <p>Rhythmic Gymnastics Scoring System</p>
+</header>
+
+<div class="card">
+    <h2>Competition Information</h2>
+
+    <label>Competition Name</label>
+    <input id="competition" placeholder="Competition name">
+
+    <label>Athlete Name</label>
+    <input id="athlete" placeholder="Gymnast name">
+
+    <label>Club / Team</label>
+    <input id="club" placeholder="Club name">
+
+    <label>Apparatus</label>
+    <input id="apparatus" placeholder="Hoop, Ball, Clubs, Ribbon">
+</div>
+
+<div class="card">
+    <h2>Judges' Submitted Scores</h2>
+
+    <div class="score-grid">
+
+        <div class="score-box">
+            <h3>DB Judge</h3>
+            <label>DB Score</label>
+            <input type="number" id="db" min="0" step="0.001"
+                   placeholder="0.000">
+        </div>
+
+        <div class="score-box">
+            <h3>DA Judge</h3>
+            <label>DA Score</label>
+            <input type="number" id="da" min="0" step="0.001"
+                   placeholder="0.000">
+        </div>
+
+        <div class="score-box">
+            <h3>Execution Judge</h3>
+            <label>E Score</label>
+            <input type="number" id="e" min="0" step="0.001"
+                   placeholder="0.000">
+        </div>
+
+        <div class="score-box">
+            <h3>Artistry Judge</h3>
+            <label>A Score</label>
+            <input type="number" id="a" min="0" step="0.001"
+                   placeholder="0.000">
+        </div>
+
+    </div>
+
+    <label>Total Penalties</label>
+    <input type="number" id="penalties" min="0" step="0.001"
+           placeholder="0.000">
+
+    <p class="note">
+        Enter the scores submitted by each judge. This page does not
+        automatically receive scores from the separate judge websites.
+    </p>
+
+    <button onclick="calculate()">CALCULATE FINAL SCORE</button>
+</div>
+
+<div class="card">
+    <h2>Final Score Result</h2>
+
+    <div class="result">
+        <p>FINAL SCORE</p>
+        <h1 id="final">0.000</h1>
+        <p id="resultStatus">Waiting for scores</p>
+    </div>
+
+    <h3>Score Breakdown</h3>
+
+    <div class="breakdown">
+        <span>Body Difficulty (DB)</span>
+        <strong id="showDB">0.000</strong>
+    </div>
+
+    <div class="breakdown">
+        <span>Apparatus Difficulty (DA)</span>
+        <strong id="showDA">0.000</strong>
+    </div>
+
+    <div class="breakdown">
+        <span>Total Difficulty (D)</span>
+        <strong id="showD">0.000</strong>
+    </div>
+
+    <div class="breakdown">
+        <span>Execution (E)</span>
+        <strong id="showE">0.000</strong>
+    </div>
+
+    <div class="breakdown">
+        <span>Artistry (A)</span>
+        <strong id="showA">0.000</strong>
+    </div>
+
+    <div class="breakdown">
+        <span>Penalties (P)</span>
+        <strong id="showP">0.000</strong>
+    </div>
+
+    <button onclick="window.print()">PRINT SCORE RESULT</button>
+    <button class="secondary" onclick="resetScores()">RESET SCORES</button>
+</div>
+
+<footer>
+    RG SCORE PRO © 2026
+</footer>
+
+</div>
+
+<script>
+function getScore(id) {
+    const field = document.getElementById(id);
+    const value = field.value.trim();
+
+    if (value === "") return null;
+
+    const number = Number(value);
+
+    if (!Number.isFinite(number) || number < 0) {
+        return NaN;
+    }
+
+    return number;
+}
+
+function calculate() {
+    const db = getScore("db");
+    const da = getScore("da");
+    const e = getScore("e");
+    const a = getScore("a");
+    const p = getScore("penalties");
+
+    const values = [db, da, e, a, p];
+
+    if (values.some(value => value === null)) {
+        alert("Please enter all five scores, using 0 where appropriate.");
+        return;
+    }
+
+    if (values.some(value => !Number.isFinite(value))) {
+        alert("Scores must be valid non-negative numbers.");
+        return;
+    }
+
+    const d = db + da;
+    const finalScore = d + e + a - p;
+
+    document.getElementById("showDB").textContent = db.toFixed(3);
+    document.getElementById("showDA").textContent = da.toFixed(3);
+    document.getElementById("showD").textContent = d.toFixed(3);
+    document.getElementById("showE").textContent = e.toFixed(3);
+    document.getElementById("showA").textContent = a.toFixed(3);
+    document.getElementById("showP").textContent = p.toFixed(3);
+
+    document.getElementById("final").textContent =
+        finalScore.toFixed(3);
+
+    document.getElementById("resultStatus").textContent =
+        "Calculation complete";
+}
+
+function resetScores() {
+    if (!confirm("Are you sure you want to reset all scores?")) {
+        return;
+    }
+
+    ["db", "da", "e", "a", "penalties"].forEach(id => {
+        document.getElementById(id).value = "";
+    });
+
+    ["showDB", "showDA", "showD", "showE", "showA", "showP"]
+        .forEach(id => {
+            document.getElementById(id).textContent = "0.000";
+        });
+
+    document.getElementById("final").textContent = "0.000";
+    document.getElementById("resultStatus").textContent =
+        "Waiting for scores";
+}
+</script>
+
+</body>
+</html>
