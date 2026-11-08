@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RG Score Pro | A Judge</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f5f0fa;
+    color: #342344;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+}
+
+header {
+    background: linear-gradient(135deg, #43245f, #7950a0);
+    color: white;
+    padding: 28px 20px;
+    text-align: center;
+    border-radius: 18px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-top: 18px;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px #00000010;
+}
+
+h2 {
+    color: #573779;
+    margin-top: 0;
+}
+
+label {
+    display: block;
+    margin-top: 13px;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid #d8cce4;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.deduction-row {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.deduction-row label {
+    margin: 0;
+    font-weight: normal;
+}
+
+.deduction-row input {
+    margin: 0;
+}
+
+.score {
+    background: #eee5f7;
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.score h1 {
+    color: #573779;
+    font-size: 42px;
+    margin: 8px 0;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #68458c;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.secondary {
+    background: #e9dff2;
+    color: #573779;
+}
+
+.small {
+    font-size: 13px;
+    color: #777;
+    line-height: 1.5;
+}
+
+@media(max-width: 550px) {
+    body {
+        padding: 10px;
+    }
+
+    .deduction-row {
+        grid-template-columns: 1fr 100px;
+    }
+}
+
+@media print {
+    button {
+        display: none;
+    }
+
+    body {
+        background: white;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1>RG SCORE PRO</h1>
+    <h2 style="color:white;">A JUDGE PANEL</h2>
+    <p>Artistry Judge</p>
+</header>
+
+<div class="card">
+    <h2>Competition Information</h2>
+
+    <label>Competition Name</label>
+    <input id="competition" placeholder="Enter competition name">
+
+    <label>Athlete Name</label>
+    <input id="athlete" placeholder="Enter gymnast name">
+
+    <label>Club / Team</label>
+    <input id="club" placeholder="Enter club or team">
+
+    <label>Apparatus</label>
+    <select id="apparatus">
+        <option value="Hoop">Hoop</option>
+        <option value="Ball">Ball</option>
+        <option value="Clubs">Clubs</option>
+        <option value="Ribbon">Ribbon</option>
+    </select>
+
+    <label>Judge Name</label>
+    <input id="judge" placeholder="Enter A judge name">
+</div>
+
+<div class="card">
+    <h2>Artistry Deductions</h2>
+
+    <p class="small">
+        Enter the deductions determined by the applicable competition
+        rules. Leave a category at zero when no deduction applies.
+        These categories are editable examples, not an official FIG
+        deduction list.
+    </p>
+
+    <div class="deduction-row">
+        <label for="music">Music and Movement Relationship</label>
+        <input id="music" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="rhythm">Rhythm</label>
+        <input id="rhythm" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="body">Body Expression</label>
+        <input id="body" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="continuity">Continuity of Movements</label>
+        <input id="continuity" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="dynamics">Dynamics and Variety</label>
+        <input id="dynamics" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="connections">Connections and Transitions</label>
+        <input id="connections" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <div class="deduction-row">
+        <label for="other">Other Applicable Deductions</label>
+        <input id="other" type="number" min="0" step="0.001" value="0">
+    </div>
+
+    <button onclick="calculate()">CALCULATE ARTISTRY DEDUCTIONS</button>
+</div>
+
+<div class="card">
+    <h2>Judge Observations</h2>
+    <label>Comments and Observations</label>
+    <textarea id="observations"
+        placeholder="Write your observations about the routine..."></textarea>
+</div>
+
+<div class="card">
+    <h2>Artistry Score Summary</h2>
+
+    <div class="score">
+        <p>TOTAL ARTISTRY DEDUCTIONS</p>
+        <h1 id="total">0.000</h1>
+        <p id="status">Waiting for calculation</p>
+    </div>
+
+    <button onclick="exportCSV()">EXPORT SCORE SHEET (CSV)</button>
+    <button class="secondary" onclick="window.print()">PRINT SCORE SHEET</button>
+    <button class="secondary" onclick="resetForm()">RESET DEDUCTIONS</button>
+</div>
+
+</div>
+
+<script>
+const categories = [
+    "music",
+    "rhythm",
+    "body",
+    "continuity",
+    "dynamics",
+    "connections",
+    "other"
+];
+
+let calculated = false;
+
+function calculate() {
+    let total = 0;
+
+    for (const id of categories) {
+        const field = document.getElementById(id);
+        const value = Number(field.value);
+
+        if (field.value.trim() === "" ||
+            !Number.isFinite(value) || value < 0) {
+            alert("Please enter valid non-negative deductions.");
+            field.focus();
+            return;
+        }
+
+        total += value;
+    }
+
+    document.getElementById("total").textContent = total.toFixed(3);
+    document.getElementById("status").textContent =
+        "Calculation complete";
+
+    calculated = true;
+}
+
+function exportCSV() {
+    if (!calculated) {
+        alert("Please calculate the deductions first.");
+        return;
+    }
+
+    const rows = [
+        ["RG SCORE PRO - ARTISTRY JUDGE"],
+        ["Competition", document.getElementById("competition").value],
+        ["Athlete", document.getElementById("athlete").value],
+        ["Club", document.getElementById("club").value],
+        ["Apparatus", document.getElementById("apparatus").value],
+        ["Judge", document.getElementById("judge").value],
+        [],
+        ["Deduction Category", "Deduction"],
+        ...categories.map(id => [
+            document.querySelector('label[for="' + id + '"]').textContent,
+            Number(document.getElementById(id).value).toFixed(3)
+        ]),
+        [],
+        ["Total Artistry Deductions",
+            document.getElementById("total").textContent],
+        ["Observations", document.getElementById("observations").value]
+    ];
+
+    const csv = rows.map(row =>
+        row.map(value =>
+            '"' + String(value ?? "").replace(/"/g, '""') + '"'
+        ).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "RG-Score-Pro-Artistry.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function resetForm() {
+    if (!confirm("Reset all artistry deductions?")) return;
+
+    categories.forEach(id => {
+        document.getElementById(id).value = "0";
+    });
+
+    document.getElementById("total").textContent = "0.000";
+    document.getElementById("status").textContent =
+        "Waiting for calculation";
+
+    document.getElementById("observations").value = "";
+
+    calculated = false;
+}
+</script>
+
+</body>
+</html>
